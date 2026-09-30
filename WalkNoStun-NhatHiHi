@@ -1,0 +1,123 @@
+---------------------------------------------------------
+-- CONFIG (CẤU HÌNH TÙY CHỈNH)
+---------------------------------------------------------
+_G.WalkSpeedCF = 10.0
+
+local V3_RANGE = 50          -- Khoảng cách lại gần Quái để bật Tộc V3
+local V3_COOLDOWN = 1       -- Thời gian hồi chiêu Tộc V3 (Giây)
+
+---------------------------------------------------------
+-- KHỞI TẠO SERVICES & PLAYERS
+---------------------------------------------------------
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local CoreGui = game:GetService("CoreGui")
+local VirtualUser = game:GetService("VirtualUser")
+
+local player = Players.LocalPlayer
+local commE = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("CommE")
+
+---------------------------------------------------------
+-- 1. CHỐNG KICK AFK 20 PHÚT
+---------------------------------------------------------
+player.Idled:Connect(function()
+    VirtualUser:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    task.wait(1)
+    VirtualUser:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+end)
+
+---------------------------------------------------------
+-- 2. TỰ ĐỘNG BẬT TỘC V3 (CHỈ KHI LẠI GẦN QUÁI <= 51 STUDS)
+---------------------------------------------------------
+local function isMonsterNearby()
+    local char = player.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return false end
+
+    -- Chỉ quét Quái trong folder Enemies (Đã xóa bỏ hoàn toàn phần quét Người chơi)
+    local enemiesFolder = workspace:FindFirstChild("Enemies")
+    if enemiesFolder then
+        for _, enemy in pairs(enemiesFolder:GetChildren()) do
+            local enemyRoot = enemy:FindFirstChild("HumanoidRootPart")
+            local hum = enemy:FindFirstChild("Humanoid")
+            if enemyRoot and hum and hum.Health > 0 then
+                if (enemyRoot.Position - root.Position).Magnitude <= V3_RANGE then
+                    return true
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+task.spawn(function()
+    while true do
+        if isMonsterNearby() then
+            commE:FireServer("ActivateAbility")
+            task.wait(V3_COOLDOWN)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
+
+---------------------------------------------------------
+-- 3. GUI & WALKSPEED / GIỮ NGUYÊN HIỆU ỨNG CHIÊU GỐC
+---------------------------------------------------------
+local ParentGui = (gethui and gethui()) or CoreGui:FindFirstChild("RobloxGui") or player:WaitForChild("PlayerGui")
+
+if ParentGui:FindFirstChild("UltimateGui") then 
+    ParentGui:FindFirstChild("UltimateGui"):Destroy() 
+end
+
+local function OptimizeEnvironment()
+    Lighting.FogEnd = 100000 
+    Lighting.GlobalShadows = false
+end
+OptimizeEnvironment()
+
+local Gui = Instance.new("ScreenGui")
+Gui.Name = "UltimateGui"
+Gui.ResetOnSpawn = false
+Gui.Parent = ParentGui
+
+local Btn = Instance.new("TextButton", Gui)
+Btn.Size = UDim2.new(0, 20, 0, 20) 
+Btn.Position = UDim2.new(0, 0, 0, 0)
+Btn.Text = "ON" 
+Btn.BackgroundColor3 = Color3.fromRGB(50, 150, 50) 
+Btn.TextColor3 = Color3.new(1,1,1) 
+Btn.TextSize = 14
+Btn.Font = Enum.Font.SourceSansBold
+Btn.Draggable = true
+Btn.Active = true
+
+Instance.new("UICorner", Btn)
+
+local Enabled = true
+Btn.MouseButton1Click:Connect(function() 
+    Enabled = not Enabled 
+    Btn.Text = Enabled and "ON" or "OFF" 
+    Btn.BackgroundColor3 = Enabled and Color3.fromRGB(50, 150, 50) or Color3.fromRGB(200, 50, 50) 
+end)
+
+if _G.ClearFogConnection then _G.ClearFogConnection:Disconnect() end
+_G.ClearFogConnection = RunService.Heartbeat:Connect(function(dt)
+    local char = player.Character 
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    
+    if Enabled and hum and root then
+        root.CanCollide = false 
+        hum.UseJumpPower = true 
+        hum.JumpPower = 150
+        
+        if not hum.SeatPart and hum.MoveDirection.Magnitude > 0 then 
+            root.CFrame = root.CFrame + (hum.MoveDirection * _G.WalkSpeedCF) 
+        end
+    end
+end)
