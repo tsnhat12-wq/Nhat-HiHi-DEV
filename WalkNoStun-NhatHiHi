@@ -1,7 +1,7 @@
 ---------------------------------------------------------
 -- CONFIG (CẤU HÌNH TÙY CHỈNH)
 ---------------------------------------------------------
-_G.WalkSpeedCF = 10.0
+_G.WalkSpeedCF = 7.0
 
 local V3_RANGE = 50          -- Khoảng cách lại gần Quái để bật Tộc V3
 local V3_COOLDOWN = 1       -- Thời gian hồi chiêu Tộc V3 (Giây)
