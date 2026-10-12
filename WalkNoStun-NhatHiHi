@@ -87,12 +87,12 @@ Gui.Parent = ParentGui
 
 local Btn = Instance.new("TextButton", Gui)
 Btn.Size = UDim2.new(0, 20, 0, 20) 
-Btn.Position = UDim2.new(0, 0, 0.075, 0)
+Btn.Position = UDim2.new(0, 0, 0.-075, 0)
 Btn.Text = "ON" 
 Btn.BackgroundColor3 = Color3.fromRGB(50, 150, 50) 
 Btn.TextColor3 = Color3.new(1,1,1) 
 Btn.TextSize = 14
-Btn.Font = Enum.Font.SourceSansBold
+Btn.Font = Enum.Font.Cartoon
 Btn.Draggable = true
 Btn.Active = true
 
